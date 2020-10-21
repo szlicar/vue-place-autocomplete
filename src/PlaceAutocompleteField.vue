@@ -41,7 +41,7 @@ const KEYCODE = {
 const API_REQUEST_OPTIONS = [
     'bounds',
     'location',
-    'component-restrictions',
+    'componentRestrictions',
     'offset',
     'radius',
     'types'
@@ -133,7 +133,7 @@ export default {
             };
 
             API_REQUEST_OPTIONS.forEach(prop => {
-                if (this[prop] !== undefined || this[prop] !== null) {
+                if (this[prop]) {
                     options[prop] = this[prop];
                 }
             });
@@ -143,9 +143,13 @@ export default {
 
         select(place) {
             geocode({ placeId: place.place_id }).then(response => {
+                const lat = response[0].geometry.location.lat();
+                const lng = response[0].geometry.location.lng();
+
                 this.hide();
                 this.$emit('input', this.query = response[0].formatted_address);
                 this.$emit('select', place, response[0]);
+                this.$emit('coordinate', lat, lng);
             });
         },
 
@@ -273,12 +277,14 @@ export default {
     },
 
     mounted() {
-        script(`${this.baseUri}?key=${this.apiKey}&libraries=${this.libraries.join(',')}`).then(() => {
-            this.$geocoder = new window.google.maps.Geocoder();
-            this.$service = new window.google.maps.places.AutocompleteService();
-            this.loaded = true;
-            this.$emit('loaded');
-        });
+        if(this.apiKey) {
+            script(`${this.baseUri}?key=${this.apiKey}&libraries=${this.libraries.join(',')}`).then(() => {
+                this.$geocoder = new window.google.maps.Geocoder();
+                this.$service = new window.google.maps.places.AutocompleteService();
+                this.loaded = true;
+                this.$emit('loaded');
+            });
+        }
     },
 
     data() {
@@ -287,7 +293,7 @@ export default {
             predictions: false,
             query: this.value,
             showPredictions: false,
-            showActivityIndicator: this.activity
+            showActivityIndicator: this.activity,
         };
     }
 
